@@ -3,6 +3,10 @@ SHELL := /bin/bash
 # The directory of this file
 DIR := $(shell echo $(shell cd "$(shell  dirname "${BASH_SOURCE[0]}" )" && pwd ))
 
+# The local users UID/GID
+LUID := $(shell id -u)
+LGID := $(shell id -g)
+
 VERSION ?= latest
 IMAGE_NAME ?= ps1337/moneymanagerex
 CONTAINER_NAME ?= moneymanagerex
@@ -26,14 +30,17 @@ build-nc: ## Build the container without caching
 	sudo docker build --rm --no-cache -t $(IMAGE_NAME) .
 
 run: ## Run container
-	touch $(DIR)/data && \
+	mkdir -p $(DIR)/data && \
 	xhost +local:root && \
 	sudo docker run \
 	-it \
 	--net=none \
 	--name $(CONTAINER_NAME) \
+	-e LOCAL_USER_ID=$(LUID) \
+	-e LOCAL_GROUP_ID=$(LGID) \
 	-e DISPLAY=$$DISPLAY \
 	-v /tmp/.X11-unix:/tmp/.X11-unix:ro \
+	-v $(DIR)/data:/var/sharedFolder \
 	$(IMAGE_NAME):$(VERSION)
 
 stop: ## Stop a running container
